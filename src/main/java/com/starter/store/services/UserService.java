@@ -1,0 +1,79 @@
+package com.starter.store.services;
+
+import org.springframework.stereotype.Component;
+
+import com.starter.store.entities.Address;
+import com.starter.store.entities.User;
+import com.starter.store.repositories.AddressRepository;
+import com.starter.store.repositories.ProfileRepository;
+import com.starter.store.repositories.UserRepository;
+
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
+@Component
+public class UserService {
+    private final UserRepository userRepository;
+    private final ProfileRepository profileRepository;
+    private final AddressRepository addressRepository;
+    private final EntityManager entityManager;
+    
+    @Transactional
+    public void showEntityStates() {
+        var user = User.builder()
+                        .name("John")
+                        .email("john@example.com")
+                        .password("password")
+                        .build();
+        if (entityManager.contains(user)) {
+            System.out.println("Persistent");
+        } else {
+            System.out.println("Transient/Detached");
+        }
+
+        userRepository.save(user);
+
+        if (entityManager.contains(user)) {
+            System.out.println("Persistent");
+        } else {
+            System.out.println("Transient/Detached");
+        }
+        
+    }
+
+    @Transactional
+    public void showRelatedEntities() {
+        var profile = profileRepository.findById(2L).orElseThrow();
+        System.out.println(profile.getUser());
+    }
+
+    public void fetchAddress() {
+        var address = addressRepository.findById(1L).orElseThrow();
+    }
+
+    public void persistRelated() {
+        var user = User.builder()
+                    .name("john")
+                    .email("john@example.com")
+                    .password("password")
+                    .build();
+        var address = Address.builder()
+                    .street("street")
+                    .city("city")
+                    .state("state")
+                    .zip("zip")
+                    .build();
+        user.addAddress(address);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteRelated() {
+        var user = userRepository.findById(11L).orElseThrow();
+        var address = user.getAddresses().getFirst();
+        user.removeAddress(address);
+        userRepository.save(user);
+    }
+}
